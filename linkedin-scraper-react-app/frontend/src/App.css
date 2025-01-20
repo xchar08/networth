@@ -1,0 +1,74 @@
+/* frontend/src/App.css */
+
+.App {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+.scraper-form {
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 12px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #0073b1;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.result, .error {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.result {
+  background-color: #e0ffe0;
+  border: 1px solid #00cc00;
+}
+
+.error {
+  background-color: #ffe0e0;
+  border: 1px solid #cc0000;
+}
+
+.result p, .error p {
+  white-space: pre-wrap;
+  color: #333;
+}
