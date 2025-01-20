@@ -3,16 +3,15 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-      "build": "cd frontend && npm run build",
-      "start": "vercel dev"
+        "build": "cd frontend && npm run build",
+        "start": "vercel dev"
     },
     "dependencies": {
-      "puppeteer-extra": "^3.3.6",
-      "puppeteer-extra-plugin-stealth": "^2.11.2",
-      "user-agents": "^1.0.957",
-      "node-fetch": "^3.3.2",
-      "dotenv": "^16.3.1"
-    },
-    "devDependencies": {}
-  }
-  
+        "dotenv": "^16.3.1",
+        "node-fetch": "^3.3.2",
+        "puppeteer-extra": "^3.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2",
+        "user-agents": "^1.0.957",
+        "vercel": "^39.3.0"
+    }
+}
