@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { FaLinkedinIn } from 'react-icons/fa';
 
 function Form({ onResult, onError }) {
   const [linkedin1, setLinkedin1] = useState('');
@@ -116,6 +117,7 @@ function Form({ onResult, onError }) {
             </svg>
           )}
           {loading ? 'Generating...' : 'Generate Message'}
+          <FaLinkedinIn className="ml-2" />
         </motion.button>
       </div>
     </motion.form>

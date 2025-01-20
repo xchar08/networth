@@ -3,8 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-      "dev": "vite",
-      "build": "vite build",
+      "build": "cd frontend && npm run build",
       "start": "vercel dev"
     },
     "dependencies": {
@@ -14,8 +13,6 @@
       "node-fetch": "^3.3.2",
       "dotenv": "^16.3.1"
     },
-    "devDependencies": {
-
-    }
+    "devDependencies": {}
   }
   
