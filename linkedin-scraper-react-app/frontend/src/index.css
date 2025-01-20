@@ -1,10 +1,6 @@
-/* frontend/src/index.css */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Custom styles if any */
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
