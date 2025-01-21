@@ -1,13 +1,10 @@
 // api/generate-message.js
 
-import puppeteer from 'puppeteer-extra';
+import puppeteer from 'puppeteer-core';
+import chromium from 'chrome-aws-lambda';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import UserAgent from 'user-agents';
 import fetch from 'node-fetch';
-import dotenv from 'dotenv';
-
-// Load environment variables
-dotenv.config();
 
 // Use the Stealth plugin to make puppeteer less detectable
 puppeteer.use(StealthPlugin());
@@ -16,12 +13,10 @@ puppeteer.use(StealthPlugin());
 const scrapeProfile = async (url) => {
   const userAgent = new UserAgent();
   const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage'
-    ]
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
   });
 
   const page = await browser.newPage();
