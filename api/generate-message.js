@@ -15,16 +15,40 @@ const scrapeProfile = async (url) => {
   const userAgent = new UserAgent();
   console.log(`Launching browser for ${url}`);
 
-  // Correctly await the Promise without invoking it
-  const executablePath = await chromium.executablePath;
-  console.log(`Chromium executable path: ${executablePath}`);
+  // Determine if running locally
+  const isLocal = process.env.NODE_ENV === 'development';
+
+  let executablePath;
+  let browserArgs;
+  let headlessMode;
+  let ignoreHTTPSErrors;
+
+  if (isLocal) {
+    // For local development, use default Puppeteer Chromium
+    console.log('Running in local development mode.');
+    executablePath = undefined; // Puppeteer will use its own Chromium
+    browserArgs = undefined;
+    headlessMode = true;
+    ignoreHTTPSErrors = false;
+  } else {
+    // For production (Vercel), use chrome-aws-lambda's Chromium
+    console.log('Running in production mode.');
+    executablePath = await chromium.executablePath;
+    browserArgs = chromium.args;
+    headlessMode = chromium.headless;
+    ignoreHTTPSErrors = true;
+  }
+
+  if (!isLocal && !executablePath) {
+    throw new Error('Chromium executable path is null. Ensure that chrome-aws-lambda is correctly installed and configured.');
+  }
 
   const browser = await puppeteer.launch({
-    args: chromium.args,
+    args: browserArgs,
     defaultViewport: chromium.defaultViewport,
     executablePath: executablePath,
-    headless: chromium.headless,
-    ignoreHTTPSErrors: true, // Optional: Useful if you encounter SSL issues
+    headless: headlessMode,
+    ignoreHTTPSErrors: ignoreHTTPSErrors,
   });
 
   const page = await browser.newPage();
