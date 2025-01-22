@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer-extra';
 import chromium from 'chrome-aws-lambda';
+import fs from 'fs';
 import UserAgent from 'user-agents';
 import fetch from 'node-fetch';
 import 'dotenv/config'; // Load environment variables if needed
@@ -8,7 +9,7 @@ import 'dotenv/config'; // Load environment variables if needed
 const isLocal = process.env.NODE_ENV === 'development';
 
 if (isLocal) {
-  console.log('Skipping StealthPlugin in development mode.');
+  console.log('Running in local development mode without StealthPlugin.');
 } else {
   console.log('Running in production mode without StealthPlugin.');
 }
@@ -44,8 +45,9 @@ const scrapeProfile = async (url) => {
   let ignoreHTTPSErrors;
 
   if (isLocal) {
+    // For local development, use Puppeteer's bundled Chromium
     console.log('Running in local development mode.');
-    executablePath = undefined; // Use Puppeteer's bundled Chromium for local
+    executablePath = undefined; // Let Puppeteer use bundled Chromium
     browserArgs = undefined;
     headlessMode = true;
     ignoreHTTPSErrors = false;
@@ -57,6 +59,7 @@ const scrapeProfile = async (url) => {
     ignoreHTTPSErrors = true;
   }
 
+  // In production, ensure executablePath is available
   if (!isLocal && !executablePath) {
     const msg = 'Chromium executable path is null. Ensure that chrome-aws-lambda is correctly installed and configured.';
     console.error(msg);
