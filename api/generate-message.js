@@ -1,5 +1,3 @@
-// api/generate-message.js
-
 import puppeteer from 'puppeteer-extra';
 import chromium from 'chrome-aws-lambda';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -7,16 +5,20 @@ import UserAgent from 'user-agents';
 import fetch from 'node-fetch';
 import 'dotenv/config'; // Load environment variables if needed
 
-// Use the Stealth plugin to make puppeteer less detectable
-puppeteer.use(StealthPlugin());
+// Determine if running locally
+const isLocal = process.env.NODE_ENV === 'development'; // Adjust as needed
+
+if (!isLocal) {
+  // Only use Stealth plugin in non-local environments
+  puppeteer.use(StealthPlugin());
+} else {
+  console.log('Skipping StealthPlugin in development mode.');
+}
 
 // Function to scrape LinkedIn profile
 const scrapeProfile = async (url) => {
   const userAgent = new UserAgent();
   console.log(`Launching browser for ${url}`);
-
-  // Determine if running locally
-  const isLocal = process.env.NODE_ENV === 'development';
 
   let executablePath;
   let browserArgs;
@@ -24,14 +26,12 @@ const scrapeProfile = async (url) => {
   let ignoreHTTPSErrors;
 
   if (isLocal) {
-    // For local development, use default Puppeteer Chromium
     console.log('Running in local development mode.');
-    executablePath = undefined; // Puppeteer will use its own Chromium
+    executablePath = undefined; // Use Puppeteer's bundled Chromium
     browserArgs = undefined;
     headlessMode = true;
     ignoreHTTPSErrors = false;
   } else {
-    // For production (Vercel), use chrome-aws-lambda's Chromium
     console.log('Running in production mode.');
     executablePath = await chromium.executablePath;
     browserArgs = chromium.args;
@@ -40,16 +40,24 @@ const scrapeProfile = async (url) => {
   }
 
   if (!isLocal && !executablePath) {
-    throw new Error('Chromium executable path is null. Ensure that chrome-aws-lambda is correctly installed and configured.');
+    const msg = 'Chromium executable path is null. Ensure that chrome-aws-lambda is correctly installed and configured.';
+    console.error(msg);
+    throw new Error(msg);
   }
 
-  const browser = await puppeteer.launch({
-    args: browserArgs,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: executablePath,
-    headless: headlessMode,
-    ignoreHTTPSErrors: ignoreHTTPSErrors,
-  });
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      args: browserArgs,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: executablePath,
+      headless: headlessMode,
+      ignoreHTTPSErrors: ignoreHTTPSErrors,
+    });
+  } catch (launchError) {
+    console.error('Error launching browser:', launchError);
+    throw launchError;
+  }
 
   const page = await browser.newPage();
   await page.setUserAgent(userAgent.toString());
@@ -68,13 +76,15 @@ const scrapeProfile = async (url) => {
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     await page.waitForSelector('body', { timeout: 15000 });
     const pageText = await page.evaluate(() => document.body.innerText);
-    await browser.close();
     console.log(`Scraped text from ${url}`);
     return pageText;
   } catch (error) {
     console.error(`Error scraping profile ${url}:`, error);
-    await browser.close();
     throw error;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 };
 
@@ -125,7 +135,7 @@ ${profile2Text}
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Nebius API response error:', response.status, response.statusText, errorText);
-      throw new Error(`Nebius API error: ${response.status} ${response.statusText}`);
+      throw new Error(`Nebius API error: ${response.status} ${response.statusText} ${errorText}`);
     }
 
     const data = await response.json();
@@ -135,7 +145,6 @@ ${profile2Text}
       throw new Error('No choices found in API response');
     }
 
-    // Ensure that only the generated message is returned
     const generatedMessage = data.choices[0].message.content.trim();
     console.log('Generated message:', generatedMessage);
 
@@ -148,6 +157,12 @@ ${profile2Text}
 
 // Export the handler function
 export default async function handler(req, res) {
+  console.log('Received request:', {
+    method: req.method,
+    headers: req.headers,
+    body: req.body
+  });
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
@@ -157,8 +172,12 @@ export default async function handler(req, res) {
 
   // Validate input presence
   if (!linkedin1 || !linkedin2 || !apiKey) {
-    console.error('Missing required fields:', req.body);
-    return res.status(400).json({ error: 'Missing required fields: linkedin1, linkedin2, apiKey.' });
+    const missing = [];
+    if (!linkedin1) missing.push('linkedin1');
+    if (!linkedin2) missing.push('linkedin2');
+    if (!apiKey) missing.push('apiKey');
+    console.error('Missing required fields:', missing);
+    return res.status(400).json({ error: `Missing required fields: ${missing.join(', ')}` });
   }
 
   // Validate URLs
@@ -188,6 +207,7 @@ export default async function handler(req, res) {
     res.status(200).json({ message });
   } catch (error) {
     console.error('An error occurred during message generation:', error);
-    res.status(500).json({ error: 'Error generating message' });
+    // Return detailed error for debugging (only in development)
+    res.status(500).json({ error: error.message || 'Error generating message' });
   }
 }
