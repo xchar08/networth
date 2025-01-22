@@ -5,12 +5,32 @@ import fetch from 'node-fetch';
 import 'dotenv/config'; // Load environment variables if needed
 
 // Determine if running locally
-const isLocal = process.env.NODE_ENV === 'development'; // Adjust as needed
+const isLocal = process.env.NODE_ENV === 'development';
 
 if (isLocal) {
   console.log('Skipping StealthPlugin in development mode.');
 } else {
   console.log('Running in production mode without StealthPlugin.');
+}
+
+// Utility: Sleep for a given number of milliseconds
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Utility: Safe launch with retries on ETXTBSY error
+async function safeLaunch(options, retries = 5, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await puppeteer.launch(options);
+    } catch (err) {
+      if (err.code === 'ETXTBSY') {
+        console.error(`Encountered ETXTBSY error, retrying launch (${i + 1}/${retries})...`);
+        await sleep(delay);
+      } else {
+        throw err;
+      }
+    }
+  }
+  throw new Error('Failed to launch browser after multiple retries due to ETXTBSY.');
 }
 
 // Function to scrape LinkedIn profile
@@ -43,15 +63,17 @@ const scrapeProfile = async (url) => {
     throw new Error(msg);
   }
 
+  const launchOptions = {
+    args: browserArgs,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: executablePath,
+    headless: headlessMode,
+    ignoreHTTPSErrors: ignoreHTTPSErrors,
+  };
+
   let browser;
   try {
-    browser = await puppeteer.launch({
-      args: browserArgs,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: executablePath,
-      headless: headlessMode,
-      ignoreHTTPSErrors: ignoreHTTPSErrors,
-    });
+    browser = await safeLaunch(launchOptions);
   } catch (launchError) {
     console.error('Error launching browser:', launchError);
     throw launchError;
