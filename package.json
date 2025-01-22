@@ -4,20 +4,21 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "npm run build:frontend",
-        "build:frontend": "cd frontend && npm install && npm run build",
-        "dev": "vercel dev",
-        "deploy": "vercel --prod"
+      "build": "npm run build:frontend",
+      "build:frontend": "cd frontend && npm install && npm run build",
+      "dev": "vercel dev",
+      "deploy": "vercel --prod"
     },
     "dependencies": {
-        "chrome-aws-lambda": "^10.1.0",
-        "node-fetch": "^3.3.2",
-        "puppeteer": "^24.1.0",
-        "puppeteer-extra": "^3.3.6",
-        "puppeteer-extra-plugin-stealth": "^2.11.2",
-        "user-agents": "^1.1.426"
+      "chrome-aws-lambda": "^10.1.0",
+      "node-fetch": "^3.3.2",
+      "puppeteer-core": "^10.1.0",
+      "puppeteer-extra": "^3.3.6",
+      "user-agents": "^1.1.426"
     },
     "devDependencies": {
-        "dotenv": "^16.0.3"
+      "puppeteer": "^10.1.0",
+      "dotenv": "^16.0.3"
     }
-}
+  }
+  
