@@ -1,6 +1,5 @@
 import puppeteer from 'puppeteer-extra';
 import chromium from 'chrome-aws-lambda';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import UserAgent from 'user-agents';
 import fetch from 'node-fetch';
 import 'dotenv/config'; // Load environment variables if needed
@@ -8,11 +7,10 @@ import 'dotenv/config'; // Load environment variables if needed
 // Determine if running locally
 const isLocal = process.env.NODE_ENV === 'development'; // Adjust as needed
 
-if (!isLocal) {
-  // Only use Stealth plugin in non-local environments
-  puppeteer.use(StealthPlugin());
-} else {
+if (isLocal) {
   console.log('Skipping StealthPlugin in development mode.');
+} else {
+  console.log('Running in production mode without StealthPlugin.');
 }
 
 // Function to scrape LinkedIn profile
@@ -27,7 +25,7 @@ const scrapeProfile = async (url) => {
 
   if (isLocal) {
     console.log('Running in local development mode.');
-    executablePath = undefined; // Use Puppeteer's bundled Chromium
+    executablePath = undefined; // Use Puppeteer's bundled Chromium for local
     browserArgs = undefined;
     headlessMode = true;
     ignoreHTTPSErrors = false;
@@ -207,7 +205,6 @@ export default async function handler(req, res) {
     res.status(200).json({ message });
   } catch (error) {
     console.error('An error occurred during message generation:', error);
-    // Return detailed error for debugging (only in development)
     res.status(500).json({ error: error.message || 'Error generating message' });
   }
 }
