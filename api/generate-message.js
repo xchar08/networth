@@ -5,6 +5,7 @@ import chromium from 'chrome-aws-lambda';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import UserAgent from 'user-agents';
 import fetch from 'node-fetch';
+import 'dotenv/config'; // Load environment variables if needed
 
 // Use the Stealth plugin to make puppeteer less detectable
 puppeteer.use(StealthPlugin());
@@ -13,19 +14,23 @@ puppeteer.use(StealthPlugin());
 const scrapeProfile = async (url) => {
   const userAgent = new UserAgent();
   console.log(`Launching browser for ${url}`);
+
+  // Correctly await the Promise without invoking it
+  const executablePath = await chromium.executablePath;
+  console.log(`Chromium executable path: ${executablePath}`);
+
   const browser = await puppeteer.launch({
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
+    executablePath: executablePath,
     headless: chromium.headless,
-    // Optional: If you encounter SSL issues, you can add the following:
-    ignoreHTTPSErrors: true,
+    ignoreHTTPSErrors: true, // Optional: Useful if you encounter SSL issues
   });
 
   const page = await browser.newPage();
   await page.setUserAgent(userAgent.toString());
   await page.setRequestInterception(true);
-  
+
   page.on('request', (req) => {
     if (['image', 'media', 'font', 'stylesheet'].includes(req.resourceType())) {
       req.abort();
