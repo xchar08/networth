@@ -1,6 +1,6 @@
 // api/generate-message.js
 
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer-extra';
 import chromium from 'chrome-aws-lambda';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import UserAgent from 'user-agents';
@@ -12,16 +12,20 @@ puppeteer.use(StealthPlugin());
 // Function to scrape LinkedIn profile
 const scrapeProfile = async (url) => {
   const userAgent = new UserAgent();
+  console.log(`Launching browser for ${url}`);
   const browser = await puppeteer.launch({
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
     executablePath: await chromium.executablePath(),
     headless: chromium.headless,
+    // Optional: If you encounter SSL issues, you can add the following:
+    ignoreHTTPSErrors: true,
   });
 
   const page = await browser.newPage();
   await page.setUserAgent(userAgent.toString());
   await page.setRequestInterception(true);
+  
   page.on('request', (req) => {
     if (['image', 'media', 'font', 'stylesheet'].includes(req.resourceType())) {
       req.abort();
@@ -31,10 +35,12 @@ const scrapeProfile = async (url) => {
   });
 
   try {
+    console.log(`Navigating to ${url}`);
     await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
     await page.waitForSelector('body', { timeout: 15000 });
     const pageText = await page.evaluate(() => document.body.innerText);
     await browser.close();
+    console.log(`Scraped text from ${url}`);
     return pageText;
   } catch (error) {
     console.error(`Error scraping profile ${url}:`, error);
@@ -66,6 +72,7 @@ ${profile2Text}
 `;
 
   try {
+    console.log('Sending request to Nebius API');
     const response = await fetch('https://api.studio.nebius.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -101,6 +108,7 @@ ${profile2Text}
 
     // Ensure that only the generated message is returned
     const generatedMessage = data.choices[0].message.content.trim();
+    console.log('Generated message:', generatedMessage);
 
     return generatedMessage;
   } catch (error) {
@@ -134,14 +142,18 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('Starting profile scraping...');
     // Scrape both LinkedIn profiles concurrently
     const profiles = await Promise.all([
       scrapeProfile(linkedin1),
       scrapeProfile(linkedin2)
     ]);
+    console.log('Profile scraping completed.');
 
+    console.log('Generating message...');
     // Generate the message using Nebius AI Studio API
     const message = await generateMessage(apiKey, profiles);
+    console.log('Message generation completed.');
 
     // Send the generated message as a JSON response
     res.status(200).json({ message });
