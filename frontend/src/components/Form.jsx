@@ -17,8 +17,8 @@ function Form({ onResult, onError }) {
     onResult('');
 
     try {
-      // Use relative path for API call
-      const response = await axios.post('/api/generate-message', {
+      // Updated URL to include .js extension for the API call
+      const response = await axios.post('/api/generate-message.js', {
         linkedin1,
         linkedin2,
         apiKey
@@ -27,11 +27,15 @@ function Form({ onResult, onError }) {
       onResult(response.data.message);
     } catch (err) {
       console.error(err);
+      let errorMsg = 'Failed to generate message. Please check your inputs and try again.';
+
+      // Convert error response to string if necessary
       if (err.response && err.response.data && err.response.data.error) {
-        onError(err.response.data.error);
-      } else {
-        onError('Failed to generate message. Please check your inputs and try again.');
+        const respError = err.response.data.error;
+        errorMsg = typeof respError === 'object' ? JSON.stringify(respError) : respError;
       }
+      
+      onError(errorMsg);
     } finally {
       setLoading(false);
     }
