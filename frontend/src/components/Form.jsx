@@ -18,7 +18,7 @@ function Form({ onResult, onError }) {
 
     try {
       // Use relative path for API call
-      const response = await axios.post('/api/generate-message', {
+      const response = await axios.post('/api/generate-message.js', {
         linkedin1,
         linkedin2,
         apiKey
